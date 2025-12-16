@@ -5,7 +5,7 @@
 #!icon=https://github.com/TAKAGIVEGETA/MyScripts/blob/main/lingoDuo/lingoDuo.png?raw=true
 
 [Script]
-http-response ^https?:\/\/ios-api-2\.duolingo\.cn\/2023-05-23\/batch script-path=https://raw.githubusercontent.com/TAKAGIVEGETA/MyScripts/main/lingoDuo/lingoDuo-xaM.js, requires-body=true, timeout=120, tag=duolingo
+http-response ^https?:\/\/ios-api-2\.duolingo\.cn\/2023-05-23\/batch script-path=https://raw.githubusercontent.com/TAKAGIVEGETA/MyScripts/main/lingoDuo/lingoDuo-xaM.js, requires-body=true, timeout=120, tag=Max解锁
 
 [MITM]
 hostname = ios-api-2.duolingo.cn
