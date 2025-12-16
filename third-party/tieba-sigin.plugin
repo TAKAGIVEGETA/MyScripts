@@ -1,19 +1,21 @@
 #!name=百度贴吧自动签到
-#!desc=自动获取百度贴吧 Cookie 并每天定时签到所有关注的贴吧（网页版）。首次使用需手动访问贴吧网页获取 Cookie，之后每天早上 8:40 自动签到。
+#!desc=自动获取百度贴吧 Cookie 并每天定时签到所有关注的贴吧（网页版）。支持自定义签到时间和是否启用 Cookie 获取功能。
 #!author=chavyleung (原脚本作者)
 #!homepage=https://github.com/chavyleung/scripts/tree/master/tieba
 #!icon=https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/c8/25/32/c825324f-6893-0612-bc87-53f03cbfc954/AppIcon-1x_U007emarketing-0-8-0-0-sRGB-85-220-0.png/512x512bb.jpg
 #!tag=签到,百度贴吧,自动任务,Cookie
+#!system=iOS,iPadOS,tvOS
 
 [Argument]
 cookieSwitch = switch,true,tag=启用 Cookie 获取,desc=开启后访问贴吧网页时会自动获取并更新 Cookie。首次使用请打开，获取成功后可关闭以避免重复触发。
+cronTime = input,"40 8 * * *",tag=自定义签到时间,desc=Cron 表达式，格式为“分 时 日 月 周”（如每天 9:00 签到请输入 "0 9 * * *"）。留空或格式错误将禁用定时签到。
 
 [Script]
 # 获取 Cookie 脚本（通过开关控制是否启用，默认开启）
 http-request ^https?:\/\/tieba\.baidu\.com\/?.? script-path=https://raw.githubusercontent.com/chavyleung/scripts/master/tieba/tieba.cookie.js, timeout=60, tag=贴吧 Cookie 获取, enable={cookieSwitch}
 
-# 每日签到脚本（cron 定时任务，每天 8:40 执行，不受开关影响）
-cron "40 8 * * *" script-path=https://raw.githubusercontent.com/chavyleung/scripts/master/tieba/tieba.js, timeout=60, tag=贴吧每日签到, img-url=https://raw.githubusercontent.com/luestr/IconResource/main/App_icon/120px/Tieba.png
+# 每日签到脚本（使用自定义 cron 表达式）
+cron {cronTime} script-path=https://raw.githubusercontent.com/chavyleung/scripts/master/tieba/tieba.js, timeout=60, tag=贴吧每日签到, img-url=https://raw.githubusercontent.com/luestr/IconResource/main/App_icon/120px/Tieba.png
 
 [MITM]
 hostname = tieba.baidu.com
