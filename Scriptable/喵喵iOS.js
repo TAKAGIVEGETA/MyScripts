@@ -4,8 +4,8 @@
 // @author       Takagivegeta
 // ==/Scriptable===
 
-const USERNAME = "2946590137@qq.com";
-const PASSWORD = "2946590137a";
+const USERNAME = "";
+const PASSWORD = "";
 
 const LOGIN_URL = "https://www.mmios.net/wp-admin/admin-ajax.php";
 const TUIGUANG_URL = "https://www.mmios.net/tuiguang";
