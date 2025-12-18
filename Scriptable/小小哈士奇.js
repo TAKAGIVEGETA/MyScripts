@@ -4,8 +4,8 @@
 // @author       Takagivegeta
 // ==/Scriptable===
 
-const USERNAME = "15528182191";
-const PASSWORD = "2946590137a";
+const USERNAME = "";
+const PASSWORD = "";
 
 const BASE_URL = "https://www.xiaohaios.com";
 const LOGIN_URL = `${BASE_URL}/aspx3/mobile/login.aspx?action=index&t=`;
