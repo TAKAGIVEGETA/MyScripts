@@ -13,8 +13,7 @@ try {
         if (obj[pool] && obj[pool].length > 0) obj[pool] = [];
     });
   }
-  if (url.includes("stories") || (obj.metadata && obj.metadata.type === "duoradio"))
-    if (obj.elements && obj.elements.length > 0) obj.elements = [];
+  if (obj.elements && obj.elements.length > 0) obj.elements = [];
   $done({ body: JSON.stringify(obj) });
 } catch (e) {
   $done({});
