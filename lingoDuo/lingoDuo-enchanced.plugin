@@ -17,7 +17,7 @@ http-response ^https?:\/\/(ios-api-[a-z0-9-]+|api\d+)\.duolingo\.c(n|om)\/2023-0
 
 http-response ^https?:\/\/(ios-api-[a-z0-9-]+|api\d+)\.duolingo\.c(n|om)\/.*\/live-ops-challenges script-path=https://raw.githubusercontent.com/TAKAGIVEGETA/MyScripts/refs/heads/main/lingoDuo/lingoDuo-time-modifier.js, requires-body=true, timeout=120, tag=限时挑战时长修改, enable={timer_switch}, argument=[{timer_mins}]
 
-http-response ^https?:\/\/(ios-api-[a-z0-9-]+|api\d+)\.duolingo\.c(n|om)\/.*\/sessions script-path=https://raw.githubusercontent.com/TAKAGIVEGETA/MyScripts/refs/heads/main/lingoDuo/lingoDuo-clear.js, requires-body=true, timeout=120, tag=直接通关(部分关卡不支持), enable={instant_clear}
+http-response ^https?:\/\/(ios-api-[a-z0-9-]+|api\d+|stories)\.duolingo\.c(n|om)\/(.*\/sessions|api2\/stories) script-path=https://raw.githubusercontent.com/TAKAGIVEGETA/MyScripts/refs/heads/main/lingoDuo/lingoDuo-clear.js, requires-body=true, timeout=120, tag=直接通关(部分关卡), enable={instant_clear}
 
 [MITM]
-hostname = ios-api-*.duolingo.com, ios-api-*.duolingo.cn, api*.duolingo.com, api*.duolingo.cn
+hostname = ios-api-*.duolingo.com, ios-api-*.duolingo.cn, api*.duolingo.com, api*.duolingo.cn, stories.duolingo.com, stories.duolingo.cn
