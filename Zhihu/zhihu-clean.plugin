@@ -1,7 +1,7 @@
 #!name=知乎去广告净化
 #!desc=移除知乎App及网页版的开屏广告、信息流广告、回答底部卡片、悬浮窗、会员弹窗，并精简顶部Tab标签。
 #!author=奶思 (由AI提取的单独知乎版)
-#!icon=https://raw.githubusercontent.com/fmz200/wool_scripts/main/icons/apps/AdblockPlus.png
+#!icon=https://raw.githubusercontent.com/TAKAGIVEGETA/MyScripts/refs/heads/main/Zhihu/zhihu.jpg
 
 [Rule]
 # 分流拦截
