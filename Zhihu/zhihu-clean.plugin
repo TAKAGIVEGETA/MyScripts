@@ -1,6 +1,6 @@
 #!name=知乎去广告净化
-#!desc=移除知乎App及网页版的开屏广告、信息流广告、回答底部卡片、悬浮窗、会员弹窗，并精简顶部Tab标签。
-#!author=奶思 (由AI提取的单独知乎版)
+#!desc=移除知乎App及网页版的开屏广告、信息流广告、回答底部卡片、悬浮窗、会员弹窗，移除HTTPDNS/QUIC配置，精简顶部Tab标签与“我的”页面。
+#!author=奶思 & 可莉 (由AI融合版)
 #!icon=https://raw.githubusercontent.com/TAKAGIVEGETA/MyScripts/refs/heads/main/Zhihu/zhihu.jpg
 
 [Rule]
@@ -16,30 +16,58 @@ IP-CIDR, 118.89.204.198/32, REJECT, no-resolve
 IP-CIDR6, 2402:4e00:1200:ed00:0:9089:6dac:96b6/128, REJECT, no-resolve
 
 [Rewrite]
-# 首页 - 悬浮图标、顶部横幅、开屏广告、关注页推荐、推荐信息流、热榜信息流、热榜直播、回答底部卡片
-^https:\/\/api\.zhihu\.com\/commercial_api\/(?:answer\/\d+\/bottom-v2|article\/\d+\/bottom-v2|banners_v3\/app_topstory_banner|launch_v2|real_time_launch_v2) reject-dict
-^https:\/\/api\.zhihu\.com\/content-distribution-core\/bubble\/common\/settings reject-dict
+# > 核心网络与配置净化 (移除拦截HTTPDNS/QUIC，防降级)
+^https:\/\/m-cloud\.zhihu\.com\/api\/cloud\/zhihu\/config\/all\? response-body-json-jq 'def drop_keys: {"km_httpdns_new_config_tars":true,"preFetchHttpDns":true,"httpdns_detector_use_concurrent":true,"httpdns_use_memory_cache":true,"httpdns_new_config_tars":true,"coreNetworkConf_useTars":true,"km_coreNetworkConf_useTars":true,"sugarQuicConfig":true,"quic_dns_detect_enable":true,"quicMixAB":true,"quic_downgrade_enable":true,"quic_priority_strategy":true,"quic_check_health_enable":true,"tquic_configuration":true,"networkExprimentList":true,"tars_ab_list":true,"zaSetExtraRequestHeader":true}; .data.configs |= map(select((drop_keys[.configKey] // false) | not) | if (.configValue | type) == "object" then del(.configValue.delayHttpdns, .configValue.dnsParser, .configValue.HTTPDNS) else . end)'
+
+# > 广告及商业化接口拦截
+^https:\/\/api\.zhihu\.com\/commercial_api\/ reject-dict
+
+# > 首页与信息流净化
+^https:\/\/api\.zhihu\.com\/root\/tab\/v\d(?:\?.+)?$ response-body-json-jq '.tab_list |= map(select(.tab_type == "follow" or .tab_type == "recommend" or .tab_type == "hot" or .tab_type == "ring_tab"))'
+^https:\/\/api\.zhihu\.com\/topstory\/recommend\? response-body-json-jq '.data |= map(select(.type == "ComponentCard")) | .data[]?.children |= (if type == "array" then map(select(.id != "ring")) else . end)'
 ^https:\/\/api\.zhihu\.com\/(?:moments\/lastread|drama\/hot-drama-list) reject-dict
 ^https:\/\/api\.zhihu\.com\/root\/window reject-dict
-# 会员页面 - 弹窗、悬浮动图
+
+# > 会员页面与卡片净化
 ^https:\/\/api\.zhihu\.com\/(?:bazaar\/float_window|market\/popovers_v2) reject-dict
-# 我的页面 - 项目列表、会员卡片
-^https:\/\/api\.zhihu\.com\/me\/guides reject-dict
+^https:\/\/api\.zhihu\.com\/kvip\/right\/my_card\? reject-dict
 ^https:\/\/api\.zhihu\.com\/unlimited\/go\/my_card reject
-# 搜索页 - 关键词、猜你想搜
+^https:\/\/api\.zhihu\.com\/unlimited\/go\/my_card\/v\d\? reject-dict
+
+# > 我的页面精简
+^https:\/\/api\.zhihu\.com\/me\/guides reject-dict
+^https:\/\/api\.zhihu\.com\/people\/homepage_entry_v\d$ reject-dict
+^https:\/\/api\.zhihu\.com\/people\/self$ response-body-json-del vip_info.entrance_new.right_button vip_info.entrance_v2
+^https:\/\/www\.zhihu\.com\/api\/v\d\/members\/homepage_card$ reject-dict
+
+# > 搜索页净化
 ^https:\/\/api\.zhihu\.com\/search\/(hot_search|preset_words) reject-dict
-^https:\/\/api\.zhihu\.com\/search\/recommend_query\/v2\? response-body-replace-regex "recommend_queries":\{.+\} "recommend_queries":{}
+^https:\/\/api\.zhihu\.com\/search\/preset_words\? reject-dict
+^https:\/\/api\.zhihu\.com\/search\/recommend_query\/v\d\? response-body-json-jq '.recommend_queries.queries |= map(select(.type == "normal"))'
 ^https:\/\/www\.zhihu\.com\/api\/v4\/search\/related_queries\/(?:article|answer)\/\d+ reject-dict
-# 回答详情页 - 评论区顶部、下一个回答
-^https:\/\/api\.zhihu\.com\/comment_v5\/(?:articles|answers)\/\d+\/list-headers reject-dict
+
+# > 回答与文章详情页净化
+^https:\/\/api\.zhihu\.com\/questions\/\d+\/feeds\? response-body-json-del ad_info
+^https:\/\/api\.zhihu\.com\/next-render\?id=\d+&type=answer reject-dict
+^https:\/\/api\.zhihu\.com\/comment_v\d\/(answers|pins)\/\d+\/root_comment\? response-body-json-del atmosphere_voting_config
+^https:\/\/api\.zhihu\.com\/comment_v\d\/answers\/\d+\/list-headers reject-dict
+^https:\/\/api\.zhihu\.com\/comment_v\d\/answers\/\d+\/list-headers$ response-body-json-del continuous_consumption_module
+^https:\/\/(api|page-info)\.zhihu\.com\/(articles|answers)\/v\d\/\d+$ response-body-json-del third_business
+^https:\/\/(api|page-info)\.zhihu\.com\/(articles|answers)\/v\d\/\d+$ response-body-json-jq '.structured_content.segments |= map(select(.type != "card"))'
+^https:\/\/api\.zhihu\.com\/(articles|answers|pins)\/v\d\/\d+\? response-body-json-del third_business ring_info interaction_bar_plugins
 ^https:\/\/api\.zhihu\.com\/prague\/related_suggestion_native\/feed\? reject-dict
 ^https:\/\/api\.zhihu\.com\/v5\.1\/topics\/answer\/\d+\/relation reject-dict
-# 其他 - 服务器推送配置
+
+# > 知答(AI)与播客净化
+^https:\/\/zhida\.zhihu\.com\/ai_ingress\/knowledge\/square\/categories\/feeds\?categoryId=1%7D$ reject-dict
+^https:\/\/zhida\.zhihu\.com\/ai_ingress\/ai_chat\/guidance$ reject-dict
+^https:\/\/api\.zhihu\.com\/podcasts\/hub\/v\d$ response-body-json-del banners
+
+# > 其他基础外链与网页净化
 ^https:\/\/api\.zhihu\.com\/ab\/api\/v1\/products\/zhihu\/platforms\/ios\/config reject
 ^https:\/\/api\.zhihu\.com\/ad-style-service\/request reject-dict
 ^https:\/\/appcloud2\.zhihu\.com\/v3\/resource\?group_name=mp reject-dict
 ^https:\/\/link\.zhihu\.com\/\?target=(?:https?)?(?:%3A|:)?(?:\/\/|%2F%2F)?(.*) 302 http://$1
-# 网页版去广告 //www.zhihu.com, zhuanlan.zhihu.com
 ^https:\/\/api\.zhihu\.com\/distribute\/rhea\/qa_ad_card\/h5\/recommendation\? reject-dict
 ^https:\/\/www\.zhihu\.com\/api\/v4\/hot_recommendation reject
 ^https:\/\/www\.zhihu\.com\/api\/v4\/mcn\/v2\/linkcards\? reject
@@ -66,4 +94,4 @@ http-response ^https:\/\/appcloud2\.zhihu\.com\/v3\/config script-path = https:/
 http-response ^https:\/\/m-cloud\.zhihu\.com\/api\/cloud\/config\/all\? script-path = https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/zhihu/zhihu.js, requires-body = true, tag = 知乎拦截服务器推送配置
 
 [MITM]
-hostname = api.zhihu.com, appcloud2.zhihu.com, m-cloud.zhihu.com, www.zhihu.com, zhuanlan.zhihu.com, link.zhihu.com
+hostname = m-cloud.zhihu.com, api.zhihu.com, www.zhihu.com, page-info.zhihu.com, zhida.zhihu.com
