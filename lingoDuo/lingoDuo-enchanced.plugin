@@ -5,12 +5,12 @@
 #!icon = https://github.com/TAKAGIVEGETA/MyScripts/blob/main/lingoDuo/lingoDuo.png?raw=true
 #!loon_version = 3.5.1(983)
 [Argument]
-xp_boost = switch, true, tag = 经验加倍, desc = 开启后练习将获得加倍经验
+xp_boost = switch, false, tag = 经验加倍, desc = 开启后练习将获得加倍经验
 multiplier = select, "2", "3", tag = 选择经验倍数, desc = 经验倍数
-timer_switch = switch, true, tag = 限时挑战时间增强, desc = 开启后可在限时挑战中自定义时长
+timer_switch = switch, false, tag = 限时挑战时间增强, desc = 开启后可在限时挑战中自定义时长
 timer_mins = input, "60", tag = 自定义挑战时长(分钟), desc = 挑战时长
-unlock_all = switch, true, tag = 解锁所有关卡, desc = 开启后将解锁当前课程的所有关卡
-instant_clear = switch, true, tag = 直接通关, desc = 开启后进入关卡直接通关
+unlock_all = switch, false, tag = 解锁所有关卡, desc = 开启后将解锁当前课程的所有关卡
+instant_clear = switch, false, tag = 直接通关, desc = 开启后进入关卡直接通关
 [Script]
 response if ${url} ~= /^https?:\/\/(?:ios-api-[a-z0-9-]+|api\d+)\.duolingo\.c(?:n|om)\/2023-05-23\/batch/i then script("https://raw.githubusercontent.com/TAKAGIVEGETA/MyScripts/main/lingoDuo/lingoDuo-xaM-enhanced.js", {${xp_boost}, ${multiplier}, ${unlock_all}}) with tag="Batch 修改", timeout=120, requires_body=true
 response if ${url} ~= /^https?:\/\/(?:ios-api-[a-z0-9-]+|api\d+)\.duolingo\.c(?:n|om)\/.*\/live-ops-challenges/i then script("https://raw.githubusercontent.com/TAKAGIVEGETA/MyScripts/main/lingoDuo/lingoDuo-time-modifier.js", {${timer_mins}}) with enable=${timer_switch}, tag="限时挑战时长修改", timeout=120, requires_body=true
