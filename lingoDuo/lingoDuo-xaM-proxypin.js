@@ -1,3 +1,5 @@
+// URL(s) 填 ^https?:\/\/(ios-api-[a-z0-9-]+|api\d+)\.duolingo\.c(n|om)\/2023-05-23\/(batch|users\/[^\/?#]+) 或者 ^https?://(ios-api-\[a-z0-9-\]+|api\\d+).duolingo.c(n|om)/2023-05-23/(batch|users/\\d{15})
+
 async function onRequest(context, request) {
     return request;
 }
