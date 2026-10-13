@@ -1,12 +1,12 @@
 try {
-    let obj = JSON.parse($response.body);
-    if (!obj.responses || obj.responses.length < 2 || (obj.responses[0].headers && 'etag' in obj.responses[0].headers)); // skip
-    else {
-        const now = Math.floor(Date.now() / 1000);
-        let userdata = JSON.parse(obj.responses[0].body);
+    const obj = JSON.parse($response.body);
+    const now = Math.floor(Date.now() / 1000);
+    const args = (typeof $argument !== 'undefined' && $argument) ? $argument : {};
+
+    const applyGold = (userdata) => {
         if (!userdata.shopItems) userdata.shopItems = [];
         const hasGold = userdata.shopItems.some(item => item.id === 'gold_subscription');
-        if (!hasGold)
+        if (!hasGold) {
             userdata.shopItems.push({
                 id: 'gold_subscription',
                 purchaseDate: now - 172800,
@@ -20,56 +20,89 @@ try {
                     type: 'gold'
                 }
             });
+        }
         userdata.subscriberLevel = 'GOLD';
         if (!userdata.trackingProperties) userdata.trackingProperties = {};
-        const premiumFeatures = [
-            "has_item_immersive_subscription", 
-            "has_item_premium_subscription", 
-            "has_item_live_subscription", 
-            "has_item_gold_subscription", 
+        [
+            "has_item_immersive_subscription",
+            "has_item_premium_subscription",
+            "has_item_live_subscription",
+            "has_item_gold_subscription",
             "has_item_max_subscription"
-        ];
-        premiumFeatures.forEach(p => userdata.trackingProperties[p] = true);
-        const xpBoostEnabled = $argument.xp_boost; 
-        const xpMultiplier = parseInt($argument.multiplier);
-        if (xpBoostEnabled) {
-            let foundXpBoost = false;
-            for (let i = 0; i < userdata.shopItems.length; i++)
-                if (userdata.shopItems[i].id === 'xp_boost_stackable') {
-                    userdata.shopItems[i].purchaseDate = now;
-                    userdata.shopItems[i].expectedExpirationDate = now + 3600;
-                    userdata.shopItems[i].xpBoostMultiplier = xpMultiplier;
-                    foundXpBoost = true;
-                    break;
-                }
-            if (!foundXpBoost) 
-                userdata.shopItems.push({
-                    id: 'xp_boost_stackable',
-                    purchaseDate: now,
-                    expectedExpirationDate: now + 3600,
-                    purchasePrice: 0,
-                    xpBoostMultiplier: xpMultiplier
-                });
-        }
-        const unlockAllEnabled = $argument.unlock_all;
-        if (unlockAllEnabled) {
-            if (userdata.currentCourse && Array.isArray(userdata.currentCourse.pathSectioned)) {
-                userdata.currentCourse.pathSectioned.forEach(section => {
-                    if (Array.isArray(section.units)) {
-                        section.units.forEach(unit => {
-                            if (Array.isArray(unit.levels)) {
-                                unit.levels.forEach(level => {
-                                    if (level.state === 'locked') level.state = 'active';
-                                });
-                            }
-                        });
-                    }
-                });
+        ].forEach(p => userdata.trackingProperties[p] = true);
+    };
+
+    const applyXpBoost = (userdata) => {
+        if (!args.xp_boost) return;
+        const xpMultiplier = parseInt(args.multiplier);
+        if (!userdata.shopItems) userdata.shopItems = [];
+        let foundXpBoost = false;
+        for (let i = 0; i < userdata.shopItems.length; i++) {
+            if (userdata.shopItems[i].id === 'xp_boost_stackable') {
+                userdata.shopItems[i].purchaseDate = now;
+                userdata.shopItems[i].expectedExpirationDate = now + 3600;
+                userdata.shopItems[i].xpBoostMultiplier = xpMultiplier;
+                foundXpBoost = true;
+                break;
             }
         }
-        obj.responses[0].body = JSON.stringify(userdata);
+        if (!foundXpBoost) {
+            userdata.shopItems.push({
+                id: 'xp_boost_stackable',
+                purchaseDate: now,
+                expectedExpirationDate: now + 3600,
+                purchasePrice: 0,
+                xpBoostMultiplier: xpMultiplier
+            });
+        }
+    };
+
+    const applyUnlockAll = (userdata) => {
+        if (!args.unlock_all) return;
+        if (userdata.currentCourse && Array.isArray(userdata.currentCourse.pathSectioned)) {
+            userdata.currentCourse.pathSectioned.forEach(section => {
+                if (Array.isArray(section.units)) {
+                    section.units.forEach(unit => {
+                        if (Array.isArray(unit.levels)) {
+                            unit.levels.forEach(level => {
+                                if (level.state === 'locked') level.state = 'active';
+                            });
+                        }
+                    });
+                }
+            });
+        }
+    };
+
+    const applyAll = (userdata) => {
+        applyGold(userdata);
+        applyXpBoost(userdata);
+        applyUnlockAll(userdata);
+    };
+
+    if (obj.responses && obj.responses.length >= 2) {
+        if (obj.responses[0].headers && 'etag' in obj.responses[0].headers) {
+            $done({});
+        } else {
+            const b0 = obj.responses[0].body;
+            if (typeof b0 === 'string') {
+                const userdata = JSON.parse(b0);
+                applyAll(userdata);
+                obj.responses[0].body = JSON.stringify(userdata);
+            } else {
+                applyAll(b0);
+                obj.responses[0].body = b0;
+            }
+            $done({ body: JSON.stringify(obj) });
+        }
+    } else if (obj && typeof obj === 'object' &&
+               (obj.shopItems !== undefined || obj.subscriberLevel !== undefined ||
+                (obj.id && obj.trackingProperties))) {
+        applyAll(obj);
+        $done({ body: JSON.stringify(obj) });
+    } else {
+        $done({});
     }
-    $done({ body: JSON.stringify(obj) });
 } catch (e) {
     $done({});
 }
